@@ -1,17 +1,11 @@
-FROM maven:3.6.3-openjdk-17-slim AS build
+# Build a JAR File
+FROM maven:3.8.2-jdk-8-slim AS stage1
+WORKDIR /home/app
+COPY . /home/app/
+RUN mvn -f /home/app/pom.xml clean package
 
-WORKDIR /app
-
-COPY pom.xml
-RUN mvn dependency:go-offline
-
-COPY src ./src
-RUN mvn package
-
-FROM openjdk.17-slim
-
-WORKDIR /app
-
-COPY --from=build /app/target/shell_7_foundation_Java_Spring.jar
-
-CMD ["java", "-jar", "shell_7_foundation_Java_Spring.jar"]
+# Create an Image
+FROM openjdk:8-jdk-alpine
+EXPOSE 5000
+COPY --from=stage1 /home/app/target/shell_7_foundation_Java_Spring
+ENTRYPOINT ["sh", "-c", "java -jar /shell_7_foundation_Java_Spring.jar"]
